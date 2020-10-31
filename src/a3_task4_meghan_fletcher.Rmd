@@ -1,0 +1,18 @@
+---
+title: "a3_task4_meghan_fletcher"
+author: "Meghan Fletcher"
+date: "10/31/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(lubridate)
+library(janitor)
+library(here)
+library(kableExtra)
+library(dplyr)
+```
+
