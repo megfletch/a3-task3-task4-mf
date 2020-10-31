@@ -1,0 +1,137 @@
+---
+title: "a3_task3_meghan_fletcher"
+author: "Meghan Fletcher"
+date: "10/30/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(lubridate)
+library(janitor)
+library(here)
+library(kableExtra)
+library(dplyr)
+```
+
+## **Section 1: Size comparisons of purple and red sea urchins (include data from all sites, and for both treatments - i.e. ignore those variables in this exploration)**
+
+### **A. Exploratory data visualization:** compare the distribution of sizes between purple and red urchins using a faceted histogram and a boxplot
+- Read in urchins data
+- make a histogram and a boxplot
+
+```{r}
+urchin_data <- read_csv(here("data", "urchins.csv")) %>% 
+  clean_names()
+
+ggplot(data = urchin_data, aes(x = size)) +
+  geom_histogram() +
+  facet_wrap(~common_name) +
+  labs(x = "Number of Sea Urchins", y = "Size (cm)")
+
+ggplot(data = urchin_data, aes(x = size)) +
+  geom_boxplot() +
+  facet_wrap(~common_name) +
+  labs(x = "Number of Sea Urchins", y = "Size (cm)")
+```
+
+### **B. Descriptive statistics table:** Create a summary table that contains: mean, median, standard deviation and sample size for red and purple sea urchins
+- Ignore site as a variable
+- Use kable function to produce nicer table
+
+```{r}
+urchin_stats <- urchin_data %>% 
+  group_by(common_name) %>% 
+  summarize(
+    mean_size = mean(size),
+    median_size = median(size),
+    sd_size = sd(size),
+    sample_size = n()
+  )
+
+urchin_stats %>% 
+  kbl(caption = "Sea Urchin Summary Statistics (Fletcher)") %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+### **C. Review and analysis:** Include some general takeaways from the graphs and tables above.
+
+From looking at the graphs above, we can see that the red sea urchins have more variance in the sample that collected. We can deduce this since the red urchin histogram and boxplot both have larger spreads than the purple urchins. The red urchins also have a larger standard deviation which is indicative of a higher variance. On another note, red urchins appear to be larger on average than purple urchins based on the mean sizes calculated for each population. The mean size of red urchins is 2.3cm greater than that of the purple urchins which means that the red urchins are about 51.6% larger than the purple urchins within these specific samples.
+
+```{r}
+#red urchin mean size - purple urchin mean size
+6.776489-4.469797
+
+#Percentage that red urchins are greater in mean size then purple urchins
+((2.306692/4.469797) * 100)
+```
+
+
+## **Section 2: Explore ppurple urchin counts by site and year**
+
+### A. In a piped sequece, create stored subset of the urchins data called purple urchins. In this section, I will be:
+- Filtering to only include observations for purple urchins
+- Convert the date to class "Date"
+- Create a new column that only contains the year
+- Create a new column called **site_full** that contains the full name (not abbreviation) for each of the 5 sites:
+  1. NAPL = Naples Reef
+  2. AQUE = Arroyo Quemado Reef
+  3. CARP = Carpinteria Reef
+  4. MOHK = Mohawk Reef
+  5. IVEE = Isla Vista Reef
+
+```{r}
+purple_urchins <- urchin_data %>% 
+  filter(common_name == "Purple Urchin") %>% 
+  mutate(date = mdy(date)) %>%
+  mutate(year_new = year(date)) %>% 
+  mutate(site_full = case_when(
+    site %in% c("NAPL") ~ "Naples Reef",
+    site %in% c("AQUE") ~ "Arroyo Quemado Reef",
+    site %in% c("CARP") ~ "Carpinteria Reef",
+    site %in% c("MOHK") ~ "Mohawk Reef",
+    site %in% c("IVEE") ~ "Isla Vista Reef"
+  ))
+  
+```
+
+### B. Make a summary table containing the total number of purple_urchins observed by site and year, starting from purple_urchins created above 
+- Use the count() function to find counts of observations by group 
+- Do not need to finalize this table 
+
+```{r}
+purple_urchins_stats <- purple_urchins %>% 
+  group_by(site_full, year_new) %>% 
+  count()
+
+purple_urchins_stats %>% 
+  kbl(caption = "Purple Sea Urchin Counts by Year and Site (Fletcher)") %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+### C. Make an **exploratory graph** of counts of purple urchins recorded at each site over time for the years included in the study. 
+- This does not need to be finalized
+
+```{r}
+ggplot(data = purple_urchins_stats, aes(x = year_new, y = n)) +
+  geom_col(aes(color=site_full)) +
+  facet_wrap(~site_full) +
+  labs(x = "Year", y = "Number of Purple Urchins", legend = "Site", title = "Count of Purple Urchins by Site and Year (Fletcher)") +
+  theme_bw() +
+  scale_color_discrete(name = "Site")
+
+```
+
+
+**Wrap-up:** After exploring the purple urchin data to compare counts by site and year, we can see a trend across all 5 sites. Something happened in 2013 that caused all purple urchin counts to drop across all five sites.
+
+
+
+
+
+
+
+
+
