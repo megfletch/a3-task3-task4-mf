@@ -16,3 +16,78 @@ library(kableExtra)
 library(dplyr)
 ```
 
+## Read in the urchins data and code for Naples Reef purple urchin mean size in January 2010
+- Include code to compare the mean size of purple urchins in CONTROL (no giant kelp removal) or ANNUAL (annual kelp removal) sections of Naples Reef in January 2010.
+- Need to filter for NAPLES site and Purple Urchin from common names
+- Wrangle date to get a column for month and year to find data for Jan 2010
+- Make a table of mean purple urchin sizes from Control (no giant kelp removal) and Annual (annual kelp removal) treatments
+
+
+```{r}
+urchin_data <- read_csv(here("data", "urchins.csv")) %>% 
+  clean_names()
+
+purple_urchins_NAPLJan2010 <- urchin_data %>% 
+  filter(site == "NAPL", common_name == "Purple Urchin") %>% 
+  mutate(date = mdy(date)) %>%
+  mutate(year_new = year(date)) %>% 
+  mutate(month_new = month(date)) %>% 
+  filter(year_new == "2010", month_new == "1")  
+
+```
+
+## Make a graph to understand the distribution of both Control and Annual treatments
+
+- Assess the distribution and normalcy of histograms and QQ plots
+
+```{r}
+purple_urchin_treatments <- purple_urchins_NAPLJan2010 %>% 
+  select(treatment, size)
+
+ggplot(purple_urchin_treatments, aes(x = size))  +
+  geom_histogram(bins = 8, aes(color=treatment)) +
+  facet_wrap(~treatment)
+
+ggplot(purple_urchin_treatments, aes(sample = size))  +
+  geom_qq() +
+  facet_wrap(~treatment)
+```
+
+**Understanding the graphs:** The distribution of the sea urchins appears to be normal because the QQ plot shows a mostly linear pattern. Additionally, the histogram plots reflect a relatively symmetric bell-shape which is indicative of a normal distribution.
+
+
+## Create a summary statistics table describing the purple urchins data from both treatments in Jan 2010
+
+```{r}
+purple_urchins_NAPLJan2010 %>% 
+  group_by(treatment) %>% 
+  summarize(
+    mean_size = mean(size),
+    median_size = median(size),
+    sd_size = sd(size),
+    sample_size = n()) %>%
+  kbl(caption = "Purple Urchin Summary Statiistics for Control and Annual Treatments in Jan 2010 (Fletcher)") %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+  
+```
+
+## Perform a 2-sample t-test to compare the means between the two treatments
+
+- Split data frame into two groups
+- Pull sample vectors
+- run a two-sample t-test using those vectors as inputs
+
+```{r}
+control_sample <-  purple_urchin_treatments %>% 
+  filter(treatment == "CONTROL") %>% 
+  pull(size)
+
+annual_sample <- purple_urchin_treatments %>% 
+  filter(treatment == "ANNUAL") %>% 
+  pull(size)
+
+t.test(control_sample, annual_sample)
+```
+
+**Wrap-up:** The mean size of the purple urchins in the annual treatment was approximately 0.2 cm larger. The median value was also larger which could indicate that purple urchins in treatments with annual giant kelp removal may be larger on average than purple urchins in the treatments without giant kelp removal. However, the standard deviation of the annual treatment sizes was also greater than that of the control treatment sizes. This means that the data of the annual treatment had a higher variance which could potentially be due to a couple outlier values. We can also see from the original QQ plot that there were a couple of higher values which likely led to the greater variance of the annual treatment. However, the p-value is 0.2536 which is greater than 0.05 which means that, for these two sample groups, there is no statistical evidence to prove that the there is a significant difference in the means of the urchin sizes between the two treatments during January 2010. **Thus, there is a 25.36% probability of getting two sample means that are at least this different if they were actually drawn from populations with the same mean sizes.** This means that the variance between the annual and control treatments is likely due other random factors and not the treatment (ie. the removal of kelp annually).
+
